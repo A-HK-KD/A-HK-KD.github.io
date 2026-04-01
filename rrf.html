@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRF Merging — Live Score Calculator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #f7f7f5;
+    --color-bg-tertiary: #f1efe8;
+    --color-bg-info: #e6f1fb;
+    --color-text-primary: #1a1a18;
+    --color-text-secondary: #5f5e5a;
+    --color-text-tertiary: #888780;
+    --color-text-info: #185fa5;
+    --color-border-tertiary: rgba(0,0,0,0.12);
+    --color-border-secondary: rgba(0,0,0,0.22);
+    --color-border-primary: rgba(0,0,0,0.32);
+    --color-border-info: #378add;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --font-mono: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", monospace;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-bg-primary: #1e1e1c;
+      --color-bg-secondary: #2a2a28;
+      --color-bg-tertiary: #242422;
+      --color-bg-info: #042c53;
+      --color-text-primary: #f0ede6;
+      --color-text-secondary: #b4b2a9;
+      --color-text-tertiary: #888780;
+      --color-text-info: #85b7eb;
+      --color-border-tertiary: rgba(255,255,255,0.1);
+      --color-border-secondary: rgba(255,255,255,0.18);
+      --color-border-primary: rgba(255,255,255,0.28);
+      --color-border-info: #85b7eb;
+    }
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    min-height: 100vh;
+    padding: 2rem 1.5rem;
+  }
+
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .header {
+    margin-bottom: 1.75rem;
+  }
+
+  .header h1 {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: 6px;
+  }
+
+  .header p {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    max-width: 680px;
+  }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .controls label {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+  }
+
+  .controls input[type="range"] {
+    width: 200px;
+    accent-color: #378add;
+    cursor: pointer;
+  }
+
+  .k-val {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    min-width: 28px;
+  }
+
+  .k-hint {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+  }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-360    { background: #378ADD; }
+  .dot-self   { background: #1D9E75; }
+  .dot-mentor { background: #BA7517; }
+  .dot-pulse  { background: #D4537E; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) 1.35fr;
+    gap: 12px;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .layout {
+      grid-template-columns: 1fr 1fr;
+    }
+    .merged-card {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Source columns */
+  .col-card,
+  .merged-card {
+    background: var(--color-bg-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+  }
+
+  .col-header,
+  .merged-header {
+    padding: 10px 12px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .col-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .chunk-list {
+    padding: 8px;
+  }
+
+  .chunk {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    cursor: grab;
+    border: 0.5px solid var(--color-border-tertiary);
+    background: var(--color-bg-secondary);
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+    user-select: none;
+  }
+
+  .chunk:last-child { margin-bottom: 0; }
+
+  .chunk:active { cursor: grabbing; }
+
+  .chunk.dragging {
+    opacity: 0.35;
+    cursor: grabbing;
+  }
+
+  .chunk.drag-over {
+    border-color: var(--color-border-info);
+    background: var(--color-bg-info);
+  }
+
+  .drag-handle {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 2px;
+    flex-shrink: 0;
+    opacity: 0.5;
+  }
+
+  .drag-handle span {
+    display: block;
+    width: 10px;
+    height: 1.5px;
+    background: var(--color-text-tertiary);
+    border-radius: 2px;
+  }
+
+  .rank-badge {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text-tertiary);
+    min-width: 14px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .chunk-label {
+    flex: 1;
+    font-size: 11px;
+    color: var(--color-text-primary);
+    line-height: 1.4;
+    min-width: 0;
+  }
+
+  .score-pill {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+    background: var(--color-bg-info);
+    color: var(--color-text-info);
+    flex-shrink: 0;
+  }
+
+  /* Merged leaderboard */
+  .merged-list {
+    padding: 8px;
+  }
+
+  .merged-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    border: 0.5px solid var(--color-border-tertiary);
+    background: var(--color-bg-secondary);
+    transition: border-color 0.3s;
+  }
+
+  .merged-item:last-child { margin-bottom: 0; }
+
+  .merged-item.top {
+    border-color: var(--color-border-info);
+  }
+
+  .merged-rank {
+    font-size: 11px;
+    font-weight: 500;
+    width: 16px;
+    text-align: center;
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+  }
+
+  .merged-label {
+    flex: 1;
+    font-size: 11px;
+    color: var(--color-text-primary);
+    line-height: 1.4;
+    min-width: 0;
+  }
+
+  .source-dots {
+    display: flex;
+    gap: 3px;
+    flex-wrap: wrap;
+    width: 26px;
+    flex-shrink: 0;
+  }
+
+  .bar-wrap {
+    width: 48px;
+    height: 5px;
+    background: var(--color-border-tertiary);
+    border-radius: 3px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: #378add;
+    transition: width 0.3s ease;
+  }
+
+  .merged-score {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    min-width: 44px;
+    text-align: right;
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+  }
+
+  .formula-note {
+    margin-top: 1rem;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-secondary);
+    padding: 10px 14px;
+    border-radius: var(--border-radius-md);
+    border: 0.5px solid var(--color-border-tertiary);
+    line-height: 1.6;
+  }
+
+  .formula-note code {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: var(--color-bg-tertiary);
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 0.5px solid var(--color-border-tertiary);
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>RRF merging — live score calculator</h1>
+    <p>Drag chunks within each source column to change their rank. Watch the merged leaderboard update in real time using Reciprocal Rank Fusion. Chunks appearing across multiple sources float to the top — that's cross-source consensus.</p>
+  </div>
+
+  <div class="controls">
+    <label for="k-slider">k constant</label>
+    <input type="range" min="1" max="120" value="60" id="k-slider" step="1">
+    <span class="k-val" id="k-display">60</span>
+    <span class="k-hint">— higher k softens rank differences</span>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="dot dot-360"></div> 360 feedback</div>
+    <div class="legend-item"><div class="dot dot-self"></div> Self-assessment</div>
+    <div class="legend-item"><div class="dot dot-mentor"></div> Mentor feedback</div>
+    <div class="legend-item"><div class="dot dot-pulse"></div> Pulse data</div>
+  </div>
+
+  <div class="layout" id="layout"></div>
+
+  <div class="formula-note">
+    RRF score = <code>Σ 1 / (k + rank)</code> across all sources where the chunk appears &nbsp;·&nbsp;
+    Chunks appearing in more sources get a natural boost from additive scoring &nbsp;·&nbsp;
+    Top-15 merged results feed into the generation context
+  </div>
+
+</div>
+
+<script>
+  const CHUNKS = [
+    { id: 'A', label: 'Led backend migration to microservices, reducing latency 40%' },
+    { id: 'B', label: 'Mentored 3 junior engineers through onboarding' },
+    { id: 'C', label: 'Delivered Q3 feature set 2 weeks ahead of schedule' },
+    { id: 'D', label: 'Improved test coverage from 45% to 82%' },
+    { id: 'E', label: 'Organised cross-team API design workshop' },
+    { id: 'F', label: 'Resolved 12 critical production incidents' },
+    { id: 'G', label: 'Contributed to org-wide coding standards doc' },
+    { id: 'H', label: 'Led hiring panel for 2 senior engineer roles' },
+  ];
+
+  const SOURCES = [
+    { key: '360',    label: '360 feedback',    dotClass: 'dot-360',    color: '#378ADD', order: [0,2,4,1,6,3,7,5] },
+    { key: 'self',   label: 'Self-assessment', dotClass: 'dot-self',   color: '#1D9E75', order: [2,0,3,5,1,7,4,6] },
+    { key: 'mentor', label: 'Mentor feedback', dotClass: 'dot-mentor', color: '#BA7517', order: [1,4,2,6,0,5,3,7] },
+    { key: 'pulse',  label: 'Pulse data',      dotClass: 'dot-pulse',  color: '#D4537E', order: [4,2,1,0,5,3,6,7] },
+  ];
+
+  let k = 60;
+  let sourceOrders = SOURCES.map(s => [...s.order]);
+  let dragging = null;
+  let dragOverEl = null;
+
+  function computeRRF() {
+    const scores = {};
+    const sources = {};
+    sourceOrders.forEach((order, si) => {
+      order.forEach((chunkIdx, rank) => {
+        const id = CHUNKS[chunkIdx].id;
+        scores[id] = (scores[id] || 0) + 1 / (k + rank + 1);
+        if (!sources[id]) sources[id] = [];
+        if (!sources[id].includes(si)) sources[id].push(si);
+      });
+    });
+    return { scores, sources };
+  }
+
+  function truncate(str, len) {
+    return str.length > len ? str.slice(0, len) + '…' : str;
+  }
+
+  function buildSourceCol(sIdx) {
+    const s = SOURCES[sIdx];
+    const order = sourceOrders[sIdx];
+
+    const card = document.createElement('div');
+    card.className = 'col-card';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'col-header';
+    hdr.innerHTML = `<span class="col-dot" style="background:${s.color}"></span>${s.label}`;
+    card.appendChild(hdr);
+
+    const list = document.createElement('div');
+    list.className = 'chunk-list';
+    list.dataset.si = sIdx;
+
+    order.forEach((chunkIdx, rank) => {
+      const chunk = CHUNKS[chunkIdx];
+      const myScore = 1 / (k + rank + 1);
+
+      const el = document.createElement('div');
+      el.className = 'chunk';
+      el.draggable = true;
+      el.dataset.si = sIdx;
+      el.dataset.rank = rank;
+      el.dataset.chunkIdx = chunkIdx;
+
+      el.innerHTML = `
+        <div class="drag-handle"><span></span><span></span><span></span></div>
+        <div class="rank-badge">${rank + 1}</div>
+        <div class="chunk-label">${truncate(chunk.label, 40)}</div>
+        <div class="score-pill">${myScore.toFixed(4)}</div>
+      `;
+
+      el.addEventListener('dragstart', e => {
+        dragging = { si: sIdx, rank };
+        e.dataTransfer.effectAllowed = 'move';
+        setTimeout(() => el.classList.add('dragging'), 0);
+      });
+
+      el.addEventListener('dragend', () => {
+        el.classList.remove('dragging');
+        if (dragOverEl) dragOverEl.classList.remove('drag-over');
+        dragging = null;
+        dragOverEl = null;
+        render();
+      });
+
+      el.addEventListener('dragover', e => {
+        e.preventDefault();
+        if (dragging && dragging.si === sIdx && dragging.rank !== rank) {
+          if (dragOverEl && dragOverEl !== el) dragOverEl.classList.remove('drag-over');
+          el.classList.add('drag-over');
+          dragOverEl = el;
+        }
+      });
+
+      el.addEventListener('dragleave', () => {
+        el.classList.remove('drag-over');
+      });
+
+      el.addEventListener('drop', e => {
+        e.preventDefault();
+        if (dragging && dragging.si === sIdx) {
+          const from = dragging.rank;
+          const to = rank;
+          const arr = sourceOrders[sIdx];
+          const [moved] = arr.splice(from, 1);
+          arr.splice(to, 0, moved);
+        }
+      });
+
+      list.appendChild(el);
+    });
+
+    card.appendChild(list);
+    return card;
+  }
+
+  function buildMerged() {
+    const { scores, sources } = computeRRF();
+    const sorted = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
+    const maxScore = scores[sorted[0]];
+
+    const card = document.createElement('div');
+    card.className = 'merged-card';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'merged-header';
+    hdr.textContent = 'Merged leaderboard';
+    card.appendChild(hdr);
+
+    const list = document.createElement('div');
+    list.className = 'merged-list';
+
+    sorted.slice(0, 8).forEach((id, i) => {
+      const chunk = CHUNKS.find(c => c.id === id);
+      const score = scores[id];
+      const srcs = sources[id];
+      const pct = Math.round((score / maxScore) * 100);
+
+      const el = document.createElement('div');
+      el.className = 'merged-item' + (i === 0 ? ' top' : '');
+
+      const dots = srcs.map(si =>
+        `<div class="dot ${SOURCES[si].dotClass}" title="${SOURCES[si].label}"></div>`
+      ).join('');
+
+      el.innerHTML = `
+        <div class="merged-rank">${i + 1}</div>
+        <div class="merged-label">${truncate(chunk.label, 34)}</div>
+        <div class="source-dots">${dots}</div>
+        <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <div class="merged-score">${score.toFixed(4)}</div>
+      `;
+
+      list.appendChild(el);
+    });
+
+    card.appendChild(list);
+    return card;
+  }
+
+  function render() {
+    const layout = document.getElementById('layout');
+    layout.innerHTML = '';
+    for (let i = 0; i < 4; i++) layout.appendChild(buildSourceCol(i));
+    layout.appendChild(buildMerged());
+  }
+
+  document.getElementById('k-slider').addEventListener('input', function () {
+    k = parseInt(this.value);
+    document.getElementById('k-display').textContent = k;
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>
