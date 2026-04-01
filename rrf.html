@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RRF Merging — Live Score Calculator</title>
+<title>RRF Merging</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -48,82 +48,82 @@
     background: var(--color-bg-tertiary);
     color: var(--color-text-primary);
     min-height: 100vh;
-    padding: 2rem 1.5rem;
+    padding: 1.5rem;
   }
 
   .page {
-    max-width: 1200px;
+    max-width: 960px;
     margin: 0 auto;
   }
 
   .header {
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.25rem;
   }
 
   .header h1 {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 500;
     color: var(--color-text-primary);
-    margin-bottom: 6px;
+    margin-bottom: 5px;
   }
 
   .header p {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--color-text-secondary);
     line-height: 1.6;
-    max-width: 680px;
+    max-width: 640px;
   }
 
   .controls {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 1.5rem;
+    gap: 10px;
+    margin-bottom: 1rem;
     flex-wrap: wrap;
   }
 
   .controls label {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--color-text-secondary);
     white-space: nowrap;
   }
 
   .controls input[type="range"] {
-    width: 200px;
+    width: 160px;
     accent-color: #378add;
     cursor: pointer;
   }
 
   .k-val {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--color-text-primary);
-    min-width: 28px;
+    min-width: 24px;
   }
 
   .k-hint {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--color-text-tertiary);
   }
 
   .legend {
     display: flex;
-    gap: 16px;
-    margin-bottom: 1.25rem;
+    gap: 14px;
+    margin-bottom: 1rem;
     flex-wrap: wrap;
   }
 
   .legend-item {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     font-size: 12px;
     color: var(--color-text-secondary);
   }
 
   .dot {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     flex-shrink: 0;
   }
@@ -131,31 +131,33 @@
   .dot-360    { background: #378ADD; }
   .dot-self   { background: #1D9E75; }
   .dot-mentor { background: #BA7517; }
-  .dot-pulse  { background: #D4537E; }
 
+  /* Two-column layout: sources left, merged right */
   .layout {
     display: grid;
-    grid-template-columns: repeat(4, 1fr) 1.35fr;
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
     align-items: start;
   }
 
-  @media (max-width: 900px) {
-    .layout {
-      grid-template-columns: 1fr 1fr;
-    }
-    .merged-card {
-      grid-column: 1 / -1;
-    }
+  /* Left: stacks all source cards vertically */
+  .sources-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 
-  @media (max-width: 560px) {
-    .layout {
-      grid-template-columns: 1fr;
-    }
+  /* Right: sticky so it stays in view while scrolling sources */
+  .merged-col {
+    position: sticky;
+    top: 1.5rem;
   }
 
-  /* Source columns */
+  @media (max-width: 600px) {
+    .layout { grid-template-columns: 1fr; }
+    .merged-col { position: static; }
+  }
+
   .col-card,
   .merged-card {
     background: var(--color-bg-primary);
@@ -166,7 +168,7 @@
 
   .col-header,
   .merged-header {
-    padding: 10px 12px;
+    padding: 9px 12px;
     border-bottom: 0.5px solid var(--color-border-tertiary);
     font-size: 12px;
     font-weight: 500;
@@ -177,23 +179,21 @@
   }
 
   .col-dot {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     flex-shrink: 0;
   }
 
-  .chunk-list {
-    padding: 8px;
-  }
+  .chunk-list { padding: 6px; }
 
   .chunk {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 8px;
+    padding: 5px 8px;
     border-radius: 6px;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     cursor: grab;
     border: 0.5px solid var(--color-border-tertiary);
     background: var(--color-bg-secondary);
@@ -202,7 +202,6 @@
   }
 
   .chunk:last-child { margin-bottom: 0; }
-
   .chunk:active { cursor: grabbing; }
 
   .chunk.dragging {
@@ -221,12 +220,12 @@
     gap: 2px;
     padding: 2px;
     flex-shrink: 0;
-    opacity: 0.5;
+    opacity: 0.45;
   }
 
   .drag-handle span {
     display: block;
-    width: 10px;
+    width: 9px;
     height: 1.5px;
     background: var(--color-text-tertiary);
     border-radius: 2px;
@@ -236,14 +235,14 @@
     font-size: 11px;
     font-weight: 500;
     color: var(--color-text-tertiary);
-    min-width: 14px;
+    min-width: 13px;
     text-align: center;
     flex-shrink: 0;
   }
 
   .chunk-label {
     flex: 1;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--color-text-primary);
     line-height: 1.4;
     min-width: 0;
@@ -258,12 +257,10 @@
     background: var(--color-bg-info);
     color: var(--color-text-info);
     flex-shrink: 0;
+    font-family: var(--font-mono);
   }
 
-  /* Merged leaderboard */
-  .merged-list {
-    padding: 8px;
-  }
+  .merged-list { padding: 6px; }
 
   .merged-item {
     display: flex;
@@ -271,22 +268,20 @@
     gap: 8px;
     padding: 7px 8px;
     border-radius: 6px;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     border: 0.5px solid var(--color-border-tertiary);
     background: var(--color-bg-secondary);
-    transition: border-color 0.3s;
+    transition: border-color 0.25s;
   }
 
   .merged-item:last-child { margin-bottom: 0; }
 
-  .merged-item.top {
-    border-color: var(--color-border-info);
-  }
+  .merged-item.top { border-color: var(--color-border-info); }
 
   .merged-rank {
     font-size: 11px;
     font-weight: 500;
-    width: 16px;
+    width: 14px;
     text-align: center;
     color: var(--color-text-tertiary);
     flex-shrink: 0;
@@ -294,7 +289,7 @@
 
   .merged-label {
     flex: 1;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--color-text-primary);
     line-height: 1.4;
     min-width: 0;
@@ -303,14 +298,13 @@
   .source-dots {
     display: flex;
     gap: 3px;
-    flex-wrap: wrap;
-    width: 26px;
+    align-items: center;
     flex-shrink: 0;
   }
 
   .bar-wrap {
-    width: 48px;
-    height: 5px;
+    width: 44px;
+    height: 4px;
     background: var(--color-border-tertiary);
     border-radius: 3px;
     overflow: hidden;
@@ -336,18 +330,18 @@
 
   .formula-note {
     margin-top: 1rem;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--color-text-secondary);
     background: var(--color-bg-secondary);
-    padding: 10px 14px;
+    padding: 9px 12px;
     border-radius: var(--border-radius-md);
     border: 0.5px solid var(--color-border-tertiary);
-    line-height: 1.6;
+    line-height: 1.7;
   }
 
   .formula-note code {
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 10px;
     background: var(--color-bg-tertiary);
     padding: 1px 5px;
     border-radius: 4px;
@@ -359,8 +353,8 @@
 <div class="page">
 
   <div class="header">
-    <h1>RRF merging — live score calculator</h1>
-    <p>Drag chunks within each source column to change their rank. Watch the merged leaderboard update in real time using Reciprocal Rank Fusion. Chunks appearing across multiple sources float to the top — that's cross-source consensus.</p>
+    <h1>RRF merging</h1>
+    <p>Drag chunks within each source column to rerank them. The merged leaderboard updates instantly — chunks appearing across multiple sources float to the top via cross-source consensus.</p>
   </div>
 
   <div class="controls">
@@ -374,15 +368,11 @@
     <div class="legend-item"><div class="dot dot-360"></div> 360 feedback</div>
     <div class="legend-item"><div class="dot dot-self"></div> Self-assessment</div>
     <div class="legend-item"><div class="dot dot-mentor"></div> Mentor feedback</div>
-    <div class="legend-item"><div class="dot dot-pulse"></div> Pulse data</div>
   </div>
 
-  <div class="layout" id="layout"></div>
-
-  <div class="formula-note">
-    RRF score = <code>Σ 1 / (k + rank)</code> across all sources where the chunk appears &nbsp;·&nbsp;
-    Chunks appearing in more sources get a natural boost from additive scoring &nbsp;·&nbsp;
-    Top-15 merged results feed into the generation context
+  <div class="layout">
+    <div class="sources-col" id="sources-col"></div>
+    <div class="merged-col" id="merged-col"></div>
   </div>
 
 </div>
@@ -391,19 +381,16 @@
   const CHUNKS = [
     { id: 'A', label: 'Led backend migration to microservices, reducing latency 40%' },
     { id: 'B', label: 'Mentored 3 junior engineers through onboarding' },
-    { id: 'C', label: 'Delivered Q3 feature set 2 weeks ahead of schedule' },
-    { id: 'D', label: 'Improved test coverage from 45% to 82%' },
-    { id: 'E', label: 'Organised cross-team API design workshop' },
-    { id: 'F', label: 'Resolved 12 critical production incidents' },
-    { id: 'G', label: 'Contributed to org-wide coding standards doc' },
-    { id: 'H', label: 'Led hiring panel for 2 senior engineer roles' },
+    { id: 'C', label: 'Organised cross-team API design workshop' },
+    { id: 'D', label: 'Resolved 12 critical production incidents' },
+    { id: 'E', label: 'Contributed to org-wide coding standards doc' },
+    { id: 'F', label: 'Led hiring panel for 2 senior engineer roles' },
   ];
 
   const SOURCES = [
-    { key: '360',    label: '360 feedback',    dotClass: 'dot-360',    color: '#378ADD', order: [0,2,4,1,6,3,7,5] },
-    { key: 'self',   label: 'Self-assessment', dotClass: 'dot-self',   color: '#1D9E75', order: [2,0,3,5,1,7,4,6] },
-    { key: 'mentor', label: 'Mentor feedback', dotClass: 'dot-mentor', color: '#BA7517', order: [1,4,2,6,0,5,3,7] },
-    { key: 'pulse',  label: 'Pulse data',      dotClass: 'dot-pulse',  color: '#D4537E', order: [4,2,1,0,5,3,6,7] },
+    { key: '360',    label: '360 feedback',    dotClass: 'dot-360',    color: '#378ADD', order: [0,2,4,1,3,5] },
+    { key: 'self',   label: 'Self-assessment', dotClass: 'dot-self',   color: '#1D9E75', order: [2,0,3,5,1,4] },
+    { key: 'mentor', label: 'Mentor feedback', dotClass: 'dot-mentor', color: '#BA7517', order: [1,4,2,3,0,5] },
   ];
 
   let k = 60;
@@ -459,7 +446,7 @@
       el.innerHTML = `
         <div class="drag-handle"><span></span><span></span><span></span></div>
         <div class="rank-badge">${rank + 1}</div>
-        <div class="chunk-label">${truncate(chunk.label, 40)}</div>
+        <div class="chunk-label">${truncate(chunk.label, 48)}</div>
         <div class="score-pill">${myScore.toFixed(4)}</div>
       `;
 
@@ -539,7 +526,7 @@
 
       el.innerHTML = `
         <div class="merged-rank">${i + 1}</div>
-        <div class="merged-label">${truncate(chunk.label, 34)}</div>
+        <div class="merged-label">${truncate(chunk.label, 42)}</div>
         <div class="source-dots">${dots}</div>
         <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div>
         <div class="merged-score">${score.toFixed(4)}</div>
@@ -553,10 +540,21 @@
   }
 
   function render() {
-    const layout = document.getElementById('layout');
-    layout.innerHTML = '';
-    for (let i = 0; i < 4; i++) layout.appendChild(buildSourceCol(i));
-    layout.appendChild(buildMerged());
+    const sourcesCol = document.getElementById('sources-col');
+    const mergedCol = document.getElementById('merged-col');
+
+    sourcesCol.innerHTML = '';
+    mergedCol.innerHTML = '';
+
+    for (let i = 0; i < SOURCES.length; i++) {
+      sourcesCol.appendChild(buildSourceCol(i));
+    }
+
+    mergedCol.appendChild(buildMerged());
+    const note = document.createElement('div');
+    note.className = 'formula-note';
+    note.innerHTML = `RRF score = <code>Σ 1 / (k + rank)</code> across all sources where the chunk appears &nbsp;·&nbsp; Additive scoring naturally boosts chunks with cross-source agreement &nbsp;·&nbsp; Top-15 merged results feed into the generation context`;
+    mergedCol.appendChild(note);
   }
 
   document.getElementById('k-slider').addEventListener('input', function () {
