@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RRF Merging</title>
+  <link rel="icon" type="image/x-icon" href="../images/A-HK-icon-black.svg">
+
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -30,7 +32,7 @@
     :root {
       --color-bg-primary: #1e1e1c;
       --color-bg-secondary: #2a2a28;
-      --color-bg-tertiary: #242422;
+      --color-bg-tertiary: rgb(17, 19, 25);
       --color-bg-info: #042c53;
       --color-text-primary: #f0ede6;
       --color-text-secondary: #b4b2a9;
@@ -351,17 +353,18 @@
 </head>
 <body>
 <div class="page">
-
+<!--
   <div class="header">
     <h1>RRF merging</h1>
     <p>Drag chunks within each source column to rerank them. The merged leaderboard updates instantly — chunks appearing across multiple sources float to the top via cross-source consensus.</p>
   </div>
+-->
 
   <div class="controls">
     <label for="k-slider">k constant</label>
     <input type="range" min="1" max="120" value="60" id="k-slider" step="1">
     <span class="k-val" id="k-display">60</span>
-    <span class="k-hint">— higher k softens rank differences</span>
+    <span class="k-hint"> higher k softens rank differences</span>
   </div>
 
   <div class="legend">
