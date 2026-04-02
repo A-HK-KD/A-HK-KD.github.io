@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt Anatomy</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg0: #ffffff; --bg1: #f7f7f5; --bg2: #f1efe8;
+  --text0: #1a1a18; --text1: #5f5e5a; --text2: #888780;
+  --border0: rgba(0,0,0,0.10); --border1: rgba(0,0,0,0.18);
+  --blue-bg: #e6f1fb; --blue-text: #185fa5; --blue-border: #378add;
+  --green-bg: #eaf3de; --green-text: #3b6d11; --green-border: #639922;
+  --amber-bg: #faeeda; --amber-text: #854f0b; --amber-border: #ba7517;
+  --teal-bg: #e1f5ee; --teal-text: #0f6e56; --teal-border: #1d9e75;
+  --purple-bg: #eeedfe; --purple-text: #3c3489; --purple-border: #534ab7;
+  --gray-bg: #f1efe8; --gray-text: #5f5e5a; --gray-border: #888780;
+  --mono: "SF Mono","Fira Code","Fira Mono","Roboto Mono",monospace;
+  --sans: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --r-md: 8px; --r-lg: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg0: #1e1e1c; --bg1: #2a2a28; --bg2: rgb(17, 19, 25);
+    --text0: #f0ede6; --text1: #b4b2a9; --text2: #888780;
+    --border0: rgba(255,255,255,0.08); --border1: rgba(255,255,255,0.16);
+    --blue-bg: #042c53; --blue-text: #85b7eb; --blue-border: #185fa5;
+    --green-bg: #173404; --green-text: #c0dd97; --green-border: #3b6d11;
+    --amber-bg: #412402; --amber-text: #fac775; --amber-border: #854f0b;
+    --teal-bg: #04342c; --teal-text: #9fe1cb; --teal-border: #0f6e56;
+    --purple-bg: #26215c; --purple-text: #cecbf6; --purple-border: #3c3489;
+    --gray-bg: #2c2c2a; --gray-text: #b4b2a9; --gray-border: #5f5e5a;
+  }
+}
+
+body { font-family: var(--sans); background: var(--bg2); color: var(--text0); padding: 2.5rem 1.5rem; line-height: 1.7; }
+.page { max-width: 860px; margin: 0 auto; }
+
+.section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2); margin-bottom: 10px; }
+h1 { font-size: 28px; font-weight: 500; color: var(--text0); margin-bottom: 1rem; line-height: 1.25; }
+h2 { font-size: 18px; font-weight: 500; color: var(--text0); margin: 2rem 0 0.6rem; }
+p { font-size: 15px; color: var(--text1); margin-bottom: 1rem; max-width: 72ch; }
+code { font-family: var(--mono); font-size: 12px; background: var(--bg1); border: 0.5px solid var(--border1); padding: 1px 5px; border-radius: 4px; color: var(--text0); }
+
+.callout { background: var(--blue-bg); border: 0.5px solid var(--blue-border); border-radius: var(--r-md); padding: 12px 16px; margin: 1.5rem 0; font-size: 13px; color: var(--blue-text); line-height: 1.6; }
+.callout strong { font-weight: 500; }
+
+/* ── Tabs ── */
+.tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; background: var(--bg1); border: 0.5px solid var(--border0); border-radius: var(--r-md); padding: 4px; width: fit-content; }
+.tab-btn { font-family: var(--sans); font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; background: transparent; color: var(--text2); transition: background 0.15s, color 0.15s; }
+.tab-btn.active { background: var(--bg0); color: var(--text0); border: 0.5px solid var(--border0); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Anatomy ── */
+.anatomy-wrap { display: grid; grid-template-columns: 160px 1fr 170px; margin: 1.5rem 0; }
+.ann-left { display: flex; flex-direction: column; padding-right: 12px; align-items: flex-end; }
+.ann-right { display: flex; flex-direction: column; padding-left: 12px; }
+.prompt-stack { display: flex; flex-direction: column; border-radius: var(--r-lg); overflow: hidden; border: 0.5px solid var(--border1); }
+
+.prompt-block { padding: 10px 14px; border-bottom: 0.5px solid var(--border1); font-size: 13px; line-height: 1.5; cursor: pointer; position: relative; transition: filter 0.18s, opacity 0.18s; }
+.prompt-block:last-child { border-bottom: none; }
+.block-label { font-size: 10px; font-weight: 500; opacity: 0.65; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
+.block-content { font-family: var(--mono); font-size: 11.5px; line-height: 1.55; }
+.block-tokens { font-size: 10px; opacity: 0.6; margin-top: 4px; font-family: var(--mono); }
+
+.block-system    { background: var(--purple-bg); color: var(--purple-text); }
+.block-tools     { background: var(--blue-bg);   color: var(--blue-text); }
+.block-retrieved { background: var(--teal-bg);   color: var(--teal-text); }
+.block-employee  { background: var(--amber-bg);  color: var(--amber-text); }
+.block-schema    { background: var(--green-bg);  color: var(--green-text); }
+.block-user      { background: var(--gray-bg);   color: var(--gray-text); }
+
+.checkpoint-bar { display: flex; align-items: center; gap: 8px; padding: 5px 14px; background: var(--green-bg); border-top: 1px dashed var(--green-border); border-bottom: 1px dashed var(--green-border); font-size: 10.5px; font-weight: 500; color: var(--green-text); }
+.cp-icon { width: 13px; height: 13px; border-radius: 50%; background: var(--green-border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cp-icon svg { width: 7px; height: 7px; }
+
+/* expand drawer */
+.block-detail { display: none; padding: 8px 14px 10px; border-top: 0.5px dashed var(--border1); font-size: 12px; line-height: 1.6; opacity: 0.85; }
+.block-detail.open { display: block; }
+
+/* token counter */
+.token-bar-wrap { margin: 0.75rem 0 1.5rem; }
+.token-bar-track { height: 10px; border-radius: 5px; background: var(--border0); overflow: hidden; margin-bottom: 6px; position: relative; }
+.token-bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--purple-border), var(--blue-border), var(--teal-border), var(--amber-border)); transition: width 0.3s ease; }
+.cp-marker { position: absolute; top: 0; height: 100%; width: 2px; background: var(--green-border); }
+.token-bar-label { font-size: 12px; color: var(--text1); display: flex; justify-content: space-between; }
+.token-bar-label span { font-weight: 500; color: var(--text0); }
+
+.ann-spacer { flex-shrink: 0; }
+.ann-item { display: flex; align-items: flex-start; gap: 8px; }
+.ann-line { width: 1px; background: var(--border1); flex-shrink: 0; }
+.ann-text { font-size: 11px; line-height: 1.5; }
+.ann-text strong { font-weight: 500; color: var(--text0); display: block; }
+.ann-text span { color: var(--text2); }
+
+/* ── Simulator ── */
+.sim-wrap { margin: 1.5rem 0; }
+
+.sim-controls { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.sim-btn { font-family: var(--sans); font-size: 12px; font-weight: 500; padding: 7px 16px; border-radius: var(--r-md); border: 0.5px solid var(--border1); background: var(--bg0); color: var(--text0); cursor: pointer; transition: background 0.15s; }
+.sim-btn:hover { background: var(--bg1); }
+.sim-btn:disabled { opacity: 0.35; cursor: default; }
+.sim-btn.primary { background: var(--text0); color: var(--bg0); border-color: var(--text0); }
+.sim-btn.primary:hover { opacity: 0.85; }
+.sim-progress { font-size: 12px; color: var(--text2); margin-left: auto; }
+
+/* narrative callout */
+.sim-narrative { background: var(--bg0); border: 0.5px solid var(--border1); border-radius: var(--r-md); padding: 12px 16px; margin-bottom: 1.25rem; min-height: 60px; }
+.sim-narrative-step { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2); margin-bottom: 4px; }
+.sim-narrative-text { font-size: 14px; color: var(--text0); line-height: 1.55; }
+
+/* prompt visualiser */
+.sim-prompt { display: flex; flex-direction: column; border-radius: var(--r-lg); overflow: hidden; border: 0.5px solid var(--border1); margin-bottom: 1rem; }
+
+.sim-block { display: flex; align-items: stretch; border-bottom: 0.5px solid var(--border1); transition: background 0.35s, opacity 0.35s; }
+.sim-block:last-child { border-bottom: none; }
+
+.sim-block-body { flex: 1; padding: 9px 14px; }
+.sim-block-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.65; margin-bottom: 2px; }
+.sim-block-content { font-family: var(--mono); font-size: 11.5px; line-height: 1.5; }
+
+.sim-block-status { width: 88px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 0 10px; border-left: 0.5px solid var(--border1); font-size: 10px; font-weight: 500; text-align: center; line-height: 1.4; transition: background 0.35s, color 0.35s; }
+
+.s-new     { background: var(--amber-bg); color: var(--amber-text); }
+.s-hit     { background: var(--green-bg); color: var(--green-text); }
+.s-neutral { background: var(--gray-bg);  color: var(--gray-text); }
+.s-pending { background: var(--bg1);      color: var(--text2); }
+
+.sim-cp { display: flex; align-items: center; gap: 8px; padding: 5px 14px; border-bottom: 0.5px solid var(--border1); }
+.sim-cp-line { flex: 1; height: 1px; border-top: 1px dashed; }
+.sim-cp-label { font-size: 10px; font-weight: 500; }
+
+/* cost meters */
+.sim-meters { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+.meter-card { background: var(--bg0); border: 0.5px solid var(--border0); border-radius: var(--r-md); padding: 12px 14px; }
+.meter-label { font-size: 10px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.meter-val { font-size: 20px; font-weight: 500; color: var(--text0); line-height: 1; margin-bottom: 4px; transition: color 0.3s; }
+.meter-val.green { color: var(--green-text); }
+.meter-val.amber { color: var(--amber-text); }
+.meter-sub { font-size: 10px; color: var(--text2); line-height: 1.4; }
+
+/* savings bar */
+.savings-bar-wrap { margin-bottom: 1.5rem; }
+.savings-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); margin-bottom: 5px; }
+.savings-bar-track { height: 8px; border-radius: 4px; background: var(--border0); overflow: hidden; }
+.savings-bar-fill { height: 100%; border-radius: 4px; background: var(--green-border); transition: width 0.4s ease; }
+
+/* ── Code tab ── */
+.code-block { background: var(--bg0); border: 0.5px solid var(--border1); border-radius: var(--r-md); padding: 14px 16px; margin: 1.25rem 0; font-family: var(--mono); font-size: 12px; line-height: 1.8; color: var(--text0); overflow-x: auto; }
+.c-key { color: var(--blue-text); }
+.c-str { color: var(--green-text); }
+.c-comment { color: var(--text2); }
+.c-cache { color: var(--amber-text); font-weight: 500; border-radius: 3px; cursor: pointer; display: inline-block; transition: background 0.2s; }
+.c-cache.lit { background: var(--amber-bg); }
+.c-cache-tooltip { display: none; position: absolute; background: var(--text0); color: var(--bg0); font-size: 11px; padding: 6px 10px; border-radius: 6px; white-space: nowrap; z-index: 10; margin-top: 4px; line-height: 1.5; pointer-events: none; }
+.c-cache-wrap { position: relative; display: inline-block; }
+.c-cache-wrap:hover .c-cache-tooltip { display: block; }
+
+.stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin: 1.5rem 0; }
+.stat-card { background: var(--bg1); border-radius: var(--r-md); padding: 14px 16px; border: 0.5px solid var(--border0); }
+.stat-num { font-size: 22px; font-weight: 500; color: var(--text0); line-height: 1; margin-bottom: 4px; }
+.stat-label { font-size: 11px; color: var(--text2); line-height: 1.4; }
+
+.flow-legend { display: flex; gap: 16px; margin-top: 1rem; flex-wrap: wrap; }
+.fl-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text1); }
+.fl-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+@media (max-width: 680px) {
+  .anatomy-wrap { grid-template-columns: 1fr; }
+  .ann-left, .ann-right { display: none; }
+  .stats-row, .sim-meters { grid-template-columns: 1fr 1fr; }
+  h1 { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+
+  <div class="token-bar-wrap">
+    <div class="token-bar-track">
+      <div class="token-bar-fill" id="token-fill" style="width:0%"></div>
+      <div class="cp-marker" id="cp1-marker" style="left:28%; display:none"></div>
+      <div class="cp-marker" id="cp2-marker" style="left:84%; display:none"></div>
+    </div>
+    <div class="token-bar-label">
+      <div>Tokens: <span id="token-count">hover a block</span></div>
+      <div style="color:var(--text2); font-size:11px">Max cached: 20,000 · Nova Lite limit</div>
+    </div>
+  </div>
+
+  <div class="anatomy-wrap">
+
+    <!-- left labels -->
+    <div class="ann-left">
+      <div class="ann-spacer" style="height: 42px"></div>
+      <div style="display:flex; align-items:stretch; gap:8px; height:88px;">
+        <div style="text-align:right; padding-top:6px">
+          <div style="font-size:11px; font-weight:500; color:var(--text0)">Static layer</div>
+          <div style="font-size:11px; color:var(--text2)">Same across<br>every call</div>
+        </div>
+        <div style="width:1px; background:var(--border1); flex-shrink:0"></div>
+      </div>
+      <div class="ann-spacer" style="height:10px"></div>
+      <div style="display:flex; align-items:stretch; gap:8px; height:78px;">
+        <div style="text-align:right; padding-top:6px">
+          <div style="font-size:11px; font-weight:500; color:var(--text0)">Retrieved layer</div>
+          <div style="font-size:11px; color:var(--text2)">Per employee,<br>hybrid search</div>
+        </div>
+        <div style="width:1px; background:var(--border1); flex-shrink:0"></div>
+      </div>
+      <div class="ann-spacer" style="height:10px"></div>
+      <div style="display:flex; align-items:stretch; gap:8px; height:74px;">
+        <div style="text-align:right; padding-top:6px">
+          <div style="font-size:11px; font-weight:500; color:var(--text0)">Dynamic layer</div>
+          <div style="font-size:11px; color:var(--text2)">Per question,<br>always new</div>
+        </div>
+        <div style="width:1px; background:var(--border1); flex-shrink:0"></div>
+      </div>
+    </div>
+
+    <!-- prompt stack -->
+    <div class="prompt-stack">
+
+      <div class="prompt-block block-system" onclick="toggleBlock('bsystem')" onmouseenter="peekTokens(800)" onmouseleave="clearTokens()">
+        <div class="block-label">System prompt · ~800 tokens</div>
+        <div class="block-content">"You are a performance assessment assistant for PAT. Generate STAR-format draft responses…"</div>
+        <div class="block-detail" id="bsystem">
+          Loaded from <code>s3://pat-ai-prompts/self-assessment/v1-system.txt</code>. Sets role, output format, tone, and STAR structure rules. Versioned — any change requires a new template version key to preserve cache stability. Never modified mid-cycle.
+        </div>
+      </div>
+
+      <div class="prompt-block block-tools" onclick="toggleBlock('btools')" onmouseenter="peekTokens(1200)" onmouseleave="clearTokens()">
+        <div class="block-label">Output schema · ~400 tokens</div>
+        <div class="block-content">JSON schema: { question_id, star_draft: { situation, task, action, result } }</div>
+        <div class="block-detail" id="btools">
+          Strict JSON schema injected as a second system block. Nova Lite follows JSON-only output reliably when the schema is explicit. Includes field descriptions and length constraints (situation ≤ 80 words, result must include a metric).
+        </div>
+      </div>
+
+      <div class="checkpoint-bar" style="color:var(--green-text); border-color:var(--green-border)">
+        <div class="cp-icon"><svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4L3.5 6L6.5 2" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        cache checkpoint 1 — 1,200 tokens · threshold met (min 1,024) · TTL 5 min
+      </div>
+
+      <div class="prompt-block block-retrieved" onclick="toggleBlock('bdevplan')" onmouseenter="peekTokens(3000)" onmouseleave="clearTokens()">
+        <div class="block-label">Retrieved — dev plan chunks · ~1,800 tokens</div>
+        <div class="block-content">Requirement: "Deliver microservices migration" · Status: complete · Progress: "…"</div>
+        <div class="block-detail" id="bdevplan">
+          Top-10 chunks returned from hybrid search (semantic + BM25) against the employee's dev plan. Cross-encoder re-ranked. Chunked at requirement level, ~100–300 tokens each. Metadata includes completion timestamp, tags, and status. Static within a single pre-generation batch.
+        </div>
+      </div>
+
+      <div class="prompt-block block-employee" onclick="toggleBlock('bpast')" onmouseenter="peekTokens(3800)" onmouseleave="clearTokens()">
+        <div class="block-label">Retrieved — past assessments · ~800 tokens</div>
+        <div class="block-content">H2 25 Q3: "I led the backend refactor by coordinating with three teams…"</div>
+        <div class="block-detail" id="bpast">
+          2–3 past self-assessment responses retrieved for stylistic grounding. Semantic chunks at sentence/paragraph boundaries, 300–500 tokens each with 50-token overlap. Provides writing style context and grounds the draft in the employee's own voice. Used by "Match My Persona" in phase 2.
+        </div>
+      </div>
+
+      <div class="checkpoint-bar" style="color:var(--green-text); border-color:var(--green-border)">
+        <div class="cp-icon"><svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4L3.5 6L6.5 2" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        cache checkpoint 2 — 3,800 tokens · all content above here reused across Q1–10 · TTL 5 min
+      </div>
+
+      <div class="prompt-block block-schema" onclick="toggleBlock('bpersona')" onmouseenter="peekTokens(4050)" onmouseleave="clearTokens()">
+        <div class="block-label">Style profile · ~250 tokens · (phase 2)</div>
+        <div class="block-content">avg_sentence_len: 18 · tone: formal · person: first · vocab_complexity: 0.72</div>
+        <div class="block-detail" id="bpersona">
+          Extracted offline by a separate Lambda that analyses 2–3 past self-assessments. Stored in <code>ai-style-profiles-{stage}</code> DynamoDB table, persistent across cycles. Injected at runtime just before the user turn. Increases context size; scoped to phase 2.
+        </div>
+      </div>
+
+      <div class="prompt-block block-user" onclick="toggleBlock('buser')" onmouseenter="peekTokens(4070)" onmouseleave="clearTokens()">
+        <div class="block-label">User turn — question · ~20 tokens</div>
+        <div class="block-content">"What were your key projects for this half, and how did you contribute to each one?"</div>
+        <div class="block-detail" id="buser">
+          The only part of the prompt that changes between the 10 questions in a pre-generation batch. ~15–25 tokens. Because it sits after checkpoint 2, every token above it in the context is served from cache — the model only processes this tiny delta per question.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- right labels -->
+    <div class="ann-right">
+      <div class="ann-spacer" style="height:42px"></div>
+      <div style="display:flex; align-items:stretch; gap:8px; height:44px;">
+        <div style="width:1px; background:var(--border1); flex-shrink:0"></div>
+        <div class="ann-text" style="padding-top:4px"><strong>Loaded from S3</strong><span>Versioned, immutable per cycle</span></div>
+      </div>
+      <div style="display:flex; align-items:stretch; gap:8px; height:44px;">
+        <div style="width:1px; background:var(--border1); flex-shrink:0"></div>
+        <div class="ann-text" style="padding-top:4px"><strong>Fixed per model</strong><span>Strict JSON schema</span></div>
+      </div>
+      <div class="ann-spacer" style="height:10px; border-left:1px solid var(--green-border); margin-left:0"></div>
+      <div style="display:flex; align-items:stretch; gap:8px; height:52px;">
+        <div style="width:1px; background:var(--border1); flex-shrink:0"></div>
+        <div class="ann-text" style="padding-top:4px"><strong>Hybrid search</strong><span>Semantic + BM25, top-10 re-ranked</span></div>
+      </div>
+      <div style="display:flex; align-items:stretch; gap:8px; height:48px;">
+        <div style="width:1px; background:var(--border1); flex-shrink:0"></div>
+        <div class="ann-text" style="padding-top:4px"><strong>Semantic chunks</strong><span>300–500 tok, 50-tok overlap</span></div>
+      </div>
+      <div class="ann-spacer" style="height:10px; border-left:1px solid var(--green-border); margin-left:0"></div>
+      <div style="display:flex; align-items:stretch; gap:8px; height:42px;">
+        <div style="width:1px; background:var(--border1); flex-shrink:0"></div>
+        <div class="ann-text" style="padding-top:4px"><strong>Per employee</strong><span>Extracted offline, injected at runtime</span></div>
+      </div>
+      <div style="display:flex; align-items:stretch; gap:8px;">
+        <div style="width:1px; background:var(--border1); flex-shrink:0"></div>
+        <div class="ann-text" style="padding-top:4px"><strong>Per question</strong><span>~20 tokens — always new</span></div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- .page -->
+
+<script>
+/* ── Tab switching ── */
+function switchTab(e, name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+/* ── Anatomy: expand blocks ── */
+function toggleBlock(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+}
+
+/* ── Anatomy: token counter ── */
+const BLOCK_TOKENS = { 800: 800, 1200: 1200, 3000: 3000, 3800: 3800, 4050: 4050, 4070: 4070 };
+const MAX_TOKENS = 4200;
+const CP1_AT = 1200;
+const CP2_AT = 3800;
+
+function peekTokens(toks) {
+  const pct = Math.min((toks / MAX_TOKENS) * 100, 100);
+  document.getElementById('token-fill').style.width = pct + '%';
+  document.getElementById('token-count').textContent = toks.toLocaleString() + ' tokens';
+  document.getElementById('cp1-marker').style.display = 'block';
+  document.getElementById('cp2-marker').style.display = 'block';
+  document.getElementById('cp1-marker').style.left = ((CP1_AT / MAX_TOKENS) * 100) + '%';
+  document.getElementById('cp2-marker').style.left = ((CP2_AT / MAX_TOKENS) * 100) + '%';
+}
+
+function clearTokens() {
+  document.getElementById('token-fill').style.width = '0%';
+  document.getElementById('token-count').textContent = 'hover a block';
+  document.getElementById('cp1-marker').style.display = 'none';
+  document.getElementById('cp2-marker').style.display = 'none';
+}
+
+/* ── Simulator ── */
+const EMPLOYEES = [
+  { name: 'Employee 1', context: 'Alice Chen · backend · H1 26' },
+  { name: 'Employee 2', context: 'Ben Okafor · frontend · H1 26' },
+  { name: 'Employee 3', context: 'Priya Nair · platform · H1 26' },
+];
+
+const QUESTIONS = [
+  'Describe your most significant technical contribution this half.',
+  'How have you supported the growth of others on your team?',
+  'Describe a situation where you drove an initiative end-to-end.',
+  'What is the most impactful thing you delivered against your dev plan?',
+  'Describe a time you navigated ambiguity or changed direction.',
+];
+
+// Each state: { emp, q, sys: 'write'|'hit'|null, ctx: 'write'|'hit'|null }
+let simStates = [];
+let simIdx = 0;
+
+function buildStates() {
+  simStates = [];
+  EMPLOYEES.forEach((emp, ei) => {
+    QUESTIONS.forEach((q, qi) => {
+      simStates.push({
+        emp: ei, q: qi,
+        sysStatus: qi === 0 && ei === 0 ? 'write' : 'hit',
+        ctxStatus: qi === 0 ? 'write' : 'hit',
+      });
+    });
+  });
+}
+
+function statusClass(s) {
+  if (s === 'write') return 's-new';
+  if (s === 'hit')   return 's-hit';
+  return 's-neutral';
+}
+
+function statusLabel(s) {
+  if (s === 'write') return 'cache write';
+  if (s === 'hit')   return 'cache hit ✓';
+  return '—';
+}
+
+function simRender() {
+  const state = simStates[simIdx];
+  const emp   = EMPLOYEES[state.emp];
+  const q     = QUESTIONS[state.q];
+  const total = simStates.length;
+  const stepNum = simIdx + 1;
+
+  // progress
+  document.getElementById('sim-progress').textContent =
+    `${emp.name} · Question ${state.q + 1} of ${QUESTIONS.length}`;
+
+  // blocks
+  const ssys = document.getElementById('ss-system');
+  ssys.className = 'sim-block-status ' + statusClass(state.sysStatus);
+  ssys.textContent = statusLabel(state.sysStatus);
+
+  const sctx = document.getElementById('ss-context');
+  sctx.className = 'sim-block-status ' + statusClass(state.ctxStatus);
+  sctx.textContent = statusLabel(state.ctxStatus);
+
+  document.getElementById('sb-context-label').textContent =
+    `Dev plan + past assessments · 2,600 tokens`;
+  document.getElementById('sb-context-content').textContent =
+    `${emp.context} · hybrid search results · style profile`;
+
+  document.getElementById('sb-q-label').textContent =
+    `User turn — Question ${state.q + 1} · ~20 tokens`;
+  document.getElementById('sb-q-content').textContent = `"${q}"`;
+
+  // narrative
+  document.getElementById('sim-step-label').textContent = `Call ${stepNum} of ${total}`;
+  let narr = '';
+  if (state.emp === 0 && state.q === 0) {
+    narr = `${emp.name}, Question 1 — the very first call in the cycle. Bedrock has nothing cached yet. Both checkpoints are written. You pay a 25% write premium on 3,800 tokens, but every subsequent call in this batch will benefit.`;
+  } else if (state.q === 0) {
+    narr = `${emp.name}, Question 1 — new employee, new fan-out. The system prompt (checkpoint 1) is still warm in cache — instant hit. But this employee's dev plan and past assessments are new, so checkpoint 2 is written fresh.`;
+  } else if (state.q === 1) {
+    narr = `${emp.name}, Question ${state.q + 1} — both checkpoints hit. The model skips 3,800 tokens of computation entirely. Only the 20-token question text is processed fresh. This pattern holds for all remaining questions.`;
+  } else {
+    narr = `${emp.name}, Question ${state.q + 1} — double cache hit again. ${emp.name}'s context is locked in for the rest of their 5-question batch. The fanout is running at maximum efficiency.`;
+  }
+  document.getElementById('sim-narrative').textContent = narr;
+
+  // meters
+  let hits = 0, tokensSaved = 0, totalPossible = 0;
+  for (let i = 0; i <= simIdx; i++) {
+    const s = simStates[i];
+    totalPossible += 3800; // max cacheable tokens per call
+    if (s.sysStatus === 'hit')  { hits++; tokensSaved += 1200; }
+    if (s.ctxStatus === 'hit')  { hits++; tokensSaved += 2600; }
+  }
+
+  document.getElementById('m-hits').textContent = hits.toLocaleString();
+  document.getElementById('m-saved').textContent = tokensSaved.toLocaleString();
+
+  const pct = totalPossible > 0 ? Math.round((tokensSaved / totalPossible) * 100) : 0;
+  document.getElementById('m-saving-pct').textContent = pct + '%';
+  document.getElementById('m-saving-pct').className = 'meter-val' + (pct > 0 ? ' green' : '');
+
+  document.getElementById('savings-bar').style.width = pct + '%';
+  document.getElementById('savings-bar-label-right').textContent = pct + '% of cacheable tokens saved';
+
+  // buttons
+  document.getElementById('btn-next').disabled = simIdx >= simStates.length - 1;
+}
+
+function simNext() {
+  if (simIdx < simStates.length - 1) { simIdx++; simRender(); }
+}
+
+function simReset() {
+  simIdx = 0;
+  simRender();
+}
+
+buildStates();
+simRender();
+
+/* ── Code tab: checkpoint highlights ── */
+function litCheckpoint(n) {
+  const el = document.getElementById('cp' + n + '-code');
+  el.classList.add('lit');
+  setTimeout(() => el.classList.remove('lit'), 1800);
+}
+</script>
+</body>
+</html>
