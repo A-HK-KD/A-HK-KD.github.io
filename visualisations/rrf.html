@@ -131,7 +131,7 @@
   }
 
   .dot-360    { background: #378ADD; }
-  .dot-self   { background: #1D9E75; }
+  .dot-self   { background: #84069c; }
   .dot-mentor { background: #BA7517; }
 
   /* Two-column layout: sources left, merged right */
@@ -178,6 +178,10 @@
     display: flex;
     align-items: center;
     gap: 7px;
+  }
+
+  .merged-header {
+    background-color: #1ec28e;
   }
 
   .col-dot {
@@ -349,16 +353,31 @@
     border-radius: 4px;
     border: 0.5px solid var(--color-border-tertiary);
   }
+
+  .interactive-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-text-info);
+    background: var(--color-bg-info);
+    padding: 6px 8px;
+    border-radius: 10px;
+    border: 0.5px solid var(--color-border-info);
+    position: absolute;
+    right: 1.5rem;
+  }
 </style>
 </head>
 <body>
 <div class="page">
-<!--
+
   <div class="header">
-    <h1>RRF merging</h1>
+   <!-- <h1>RRF merging</h1>
     <p>Drag chunks within each source column to rerank them. The merged leaderboard updates instantly — chunks appearing across multiple sources float to the top via cross-source consensus.</p>
+  -->
+    <span class="interactive-tag">Interactive Example - Play Around !</span>
   </div>
--->
+
 
   <div class="controls">
     <label for="k-slider">k constant</label>
@@ -392,7 +411,7 @@
 
   const SOURCES = [
     { key: '360',    label: '360 feedback',    dotClass: 'dot-360',    color: '#378ADD', order: [0,2,4,1,3,5] },
-    { key: 'self',   label: 'Self-assessment', dotClass: 'dot-self',   color: '#1D9E75', order: [2,0,3,5,1,4] },
+    { key: 'self',   label: 'Self-assessment', dotClass: 'dot-self',   color: '#84069c', order: [2,0,3,5,1,4] },
     { key: 'mentor', label: 'Mentor feedback', dotClass: 'dot-mentor', color: '#BA7517', order: [1,4,2,3,0,5] },
   ];
 
