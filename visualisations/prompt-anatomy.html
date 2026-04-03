@@ -22,6 +22,9 @@
   --mono: "SF Mono","Fira Code","Fira Mono","Roboto Mono",monospace;
   --sans: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
   --r-md: 8px; --r-lg: 12px;
+  --color-border-info: #378add;
+  --color-bg-info: #e6f1fb;
+  --color-text-info: #185fa5;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -35,8 +38,12 @@
     --teal-bg: #04342c; --teal-text: #9fe1cb; --teal-border: #0f6e56;
     --purple-bg: #26215c; --purple-text: #cecbf6; --purple-border: #3c3489;
     --gray-bg: #2c2c2a; --gray-text: #b4b2a9; --gray-border: #5f5e5a;
+    --color-border-info: #85b7eb;
+    --color-bg-info: #042c53;
+    --color-text-info: #85b7eb;
   }
 }
+   
 
 body { font-family: var(--sans); background: var(--bg2); color: var(--text0); padding: 2.5rem 1.5rem; line-height: 1.7; }
 .page { max-width: 860px; margin: 0 auto; }
@@ -171,6 +178,25 @@ code { font-family: var(--mono); font-size: 12px; background: var(--bg1); border
 .fl-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text1); }
 .fl-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 
+.header {
+    position: relative;
+    min-height: 32px;
+}
+  
+.interactive-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--color-text-info);
+    background: var(--color-bg-info);
+    padding: 4px 10px;
+    border-radius: 10px;
+    border: 0.5px solid var(--color-border-info);
+    position: absolute;
+    right: 0;
+    margin-bottom: 20px;
+}
+
 @media (max-width: 680px) {
   .anatomy-wrap { grid-template-columns: 1fr; }
   .ann-left, .ann-right { display: none; }
@@ -181,7 +207,12 @@ code { font-family: var(--mono); font-size: 12px; background: var(--bg1); border
 </head>
 <body>
 <div class="page">
-
+<div class="header">
+   <!-- <h1>RRF merging</h1>
+    <p>Drag chunks within each source column to rerank them. The merged leaderboard updates instantly — chunks appearing across multiple sources float to the top via cross-source consensus.</p>
+  -->
+    <span class="interactive-tag">Interactive Example - Play Around !</span>
+  </div>
 
   <div class="token-bar-wrap">
     <div class="token-bar-track">
